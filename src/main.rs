@@ -13,18 +13,18 @@ fn main()-> subprocess::Result<()> {
 	    Ok(())
 
 	} else {
-		let program = args().nth(1).unwrap();
-		let process = args().nth(2).unwrap();
+	    let program = args().nth(1).unwrap();
+	    let process = args().nth(2).unwrap();
 
-		let mut to_open = File::open(&program)?;
+	    let mut to_open = File::open(&program)?;
 	    let mut buffer = Vec::new();
 	    to_open.read_to_end(&mut buffer)?;
 
-		create_dir_all(format!("{}_morph/src/", &program))?;
-		let data = include_bytes!("template/main.rs");
-		let toml = include_bytes!("template/Cargo.toml");
+	    create_dir_all(format!("{}_morph/src/", &program))?;
+	    let data = include_bytes!("template/main.rs");
+	    let toml = include_bytes!("template/Cargo.toml");
 
-		let mut to_compress = BufReader::new(File::open(&program).unwrap());
+	    let mut to_compress = BufReader::new(File::open(&program).unwrap());
 	    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
 	  
 	    copy(&mut to_compress, &mut encoder).unwrap();
@@ -45,14 +45,14 @@ fn main()-> subprocess::Result<()> {
 	    Exec::shell(format!("cd {}_morph && cargo build --release && cp target/release/{} . && strip {}", &program, &program, &program)).join()?;
 
 	    let mut to_append = OpenOptions::new().write(true).append(true).open(format!("{}_morph/{}", &program, &program)).unwrap();
-		let mut urandom = File::open("/dev/urandom")?;
-  		let mut key = [0; 32];
-  		let mut encrypted = Vec::new();
-  		urandom.read(&mut key)?;
-  		for i in 0..compressed.len() { encrypted.push(compressed[i] ^ key[i % 32]) }
-    	for i in 0..32 { encrypted.push(key[i]) }
-		to_append.write_all(&encrypted)?;
+	    let mut urandom = File::open("/dev/urandom")?;
+  	    let mut key = [0; 32];
+  	    let mut encrypted = Vec::new();
+  	    urandom.read(&mut key)?;
+  	    for i in 0..compressed.len() { encrypted.push(compressed[i] ^ key[i % 32]) }
+            for i in 0..32 { encrypted.push(key[i]) }
+	    to_append.write_all(&encrypted)?;
 
-		Ok(())
+	    Ok(())
 	}
 }
